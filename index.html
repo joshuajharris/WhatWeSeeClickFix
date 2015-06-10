@@ -1,11 +1,99 @@
 <!DOCTYPE html>
-<html>
-  <head></head>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>What We See Click Fix by kmcurry</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
   <body>
-    <h2>What We See, Click, Fix</h2>
+    <section class="page-header">
+      <h1 class="project-name">What We See Click Fix</h1>
+      <h2 class="project-tagline">Finding and telling the stories in 311 data through the See Click Fix API</h2>
+      <a href="https://github.com/kmcurry/fixit" class="btn">View on GitHub</a>
+      <a href="https://github.com/kmcurry/fixit/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/kmcurry/fixit/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
 
-    <!-- include:js(list:vendorList) -->
-    <!-- include:js(js/routers/*.js) -->
-    <!-- include:js(js/*.js) -->
+    <section class="main-content">
+      <h2>
+<a id="purpose" class="anchor" href="#purpose" aria-hidden="true"><span class="octicon octicon-link"></span></a>Purpose</h2>
+
+<p>Let's do some civic hacking with See Click Fix API for Hampton Roads, Virginia to see what stories it might tell us.</p>
+
+<h2>
+<a id="inspiration" class="anchor" href="#inspiration" aria-hidden="true"><span class="octicon octicon-link"></span></a>Inspiration</h2>
+
+<ul>
+<li>Make an infographic about the most common issue(s)</li>
+<li>Make a layered map of issues + electoral districts, + zip codes</li>
+<li>Make a heat map of issues by lat/lon, by block.</li>
+<li>Make a Traveling Salesman visualization that visits all the issues in a place</li>
+<li>Make word clouds from issue descriptions</li>
+<li>Make an infographic of the top <em>N</em> terms in descriptions</li>
+<li>Make an infographic based on analyzing times between <code>created_at</code>, <code>updated_at</code> (ideally <code>acknowledged_at</code> and <code>closed_at</code> but those are all <code>null</code>)</li>
+<li>Make a map showing all instances of a single type of issue by city, by all cities</li>
+<li>Make an infographic about all the issues that reference "neighbor"</li>
+<li><a href="https://www.kaggle.com/c/see-click-predict-fix/visualization">See Click <em>Predict</em> Fix Competition</a></li>
+</ul>
+
+<h2>
+<a id="end-points" class="anchor" href="#end-points" aria-hidden="true"><span class="octicon octicon-link"></span></a>End Points</h2>
+
+<ul>
+  <li><a href="https://seeclickfix.com/api/v2/issues?place_url=chesapeake&amp;state=VA&amp;per_page=100">https://seeclickfix.com/api/v2/issues?place_url=chesapeake&amp;state=VA</a></li>
+  <li><a href="https://seeclickfix.com/api/v2/issues?place_url=hampton&amp;state=VA&amp;per_page=100">https://seeclickfix.com/api/v2/issues?place_url=hampton&amp;state=VA</a></li>
+  <li><a href="https://seeclickfix.com/api/v2/issues?place_url=newport-news&amp;state=VA&amp;per_page=100">https://seeclickfix.com/api/v2/issues?place_url=newport-news&amp;state=VA</a></li>
+  <li><a href="https://seeclickfix.com/api/v2/issues?place_url=norfolk&amp;state=VA&amp;per_page=100">https://seeclickfix.com/api/v2/issues?place_url=norfolk&amp;state=VA</a></li>
+  <li><a href="https://seeclickfix.com/api/v2/issues?place_url=portsmouth&amp;state=VA&amp;per_page=100">https://seeclickfix.com/api/v2/issues?place_url=portsmouth&amp;state=VA</a></li>
+  <li><a href="https://seeclickfix.com/api/v2/issues?place_url=suffolk&amp;state=VA&amp;per_page=100">https://seeclickfix.com/api/v2/issues?place_url=suffolk&amp;state=VA</a></li>
+  <li><a href="https://seeclickfix.com/api/v2/issues?place_url=virginia-beach&amp;state=VA&amp;per_page=100">https://seeclickfix.com/api/v2/issues?place_url=virginia-beach&amp;state=VA</a></li>
+</ul>
+
+<h2>
+<a id="format-data" class="anchor" href="#format-data" aria-hidden="true"><span class="octicon octicon-link"></span></a>MongoDB and the Data</h2>
+
+<p>
+When inserting the see click fix issues and city boundaries into a mongodb collection, we ran into the problem of inserting only
+one object because all the issues/boundaries were located inside of a single array in one object.  To fix this, we wrote a script 
+like<br/><br/>
+<b>script.js</b><br/>
+<code>
+  var fs = require('fs');<br/>
+  var col; <i>// collection of elements</i><br/> 
+  fs.readFile('<i>filename.json</i>', 'utf-8', function(err, data){<br/> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if(err) console.error(err);<br/> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;col = (JSON.parse(data).<i>name_of_array_key);</i>
+<i> // issues for example</i>
+<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for(var i = 0; i < col.length; i++){<br/> 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;console.log(JSON.stringify(col[i]));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br/> 
+});<br/> 
+</code>
+<br/>
+Then you get all the individual objects into a file through a unix shell with<br/>
+<code>[name@machine]$ node script.js > <i>collection.json</i></code><br/>
+Last, import the file into your mongo collection with<br/>
+<code>[name@machine]$ mongoimport --db <i>dbname</i> --collection <i>collection_name</i> --file <i>collection.json</i></code>
+
+</p>
+
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/kmcurry/fixit">What We See Click Fix</a> is maintained by <a href="https://github.com/kmcurry">kmcurry</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
   </body>
 </html>
+
