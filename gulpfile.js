@@ -1,8 +1,11 @@
 var gulp = require('gulp'),
-    includeSources = require('gulp-include-source');
+    concat = require('gulp-concat'),
+    uglify = require('gulp-uglify');
 
-gulp.task('html', function() {
-  return gulp.src( './index.html' )
-    .pipe( includeSources() )
-    .pipe( gulp.dest('build/') );
+gulp.task('uglify', function() {
+  return gulp.src(['bower_components/**/*.js', 'js/**/*.js'])
+    .pipe(uglify())
+    .pipe(gulp.dest('dist'))
 });
+
+gulp.task('default', function(){});
